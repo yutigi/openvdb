@@ -68,6 +68,9 @@ namespace boost { namespace interprocess { namespace detail {} namespace ipcdeta
 #include <fstream>
 #include <numeric> // for std::iota()
 
+#ifdef OPENVDB_USE_BLOSC
+#include <blosc.h>
+#endif
 
 /// @brief io::MappedFile has a private constructor, so this unit tests uses a matching proxy
 class ProxyMappedFile
@@ -325,6 +328,56 @@ TestStreamCompression::testBlosc()
         CPPUNIT_ASSERT(!compressedBuffer);
         CPPUNIT_ASSERT_EQUAL(compressedBytes, size_t(0));
     }
+
+#ifdef OPENVDB_USE_BLOSC
+    { // page size tests
+        CPPUNIT_ASSERT_EQUAL(size_t(1024*1024), size_t(PageSize));
+
+        { // non-iota test (to confirm no issues with the stdlib implementation)
+            std::vector<uint8_t> values;
+            values.resize(PageSize);
+            for (int i = 0; i < PageSize; i++) {
+                values[i] = static_cast<uint8_t>(i);
+            }
+
+            size_t size = bloscCompressedSize(reinterpret_cast<const char*>(&values[0]), values.size());
+
+            // uncompressed size
+            CPPUNIT_ASSERT_EQUAL(values.size(), size_t(PageSize));
+            // compressed size
+            CPPUNIT_ASSERT_EQUAL(std::streampos(size), std::streampos(4444));
+        }
+        { // bloscCompressedSize test
+            std::vector<uint8_t> values;
+            values.resize(PageSize);
+            std::iota(values.begin(), values.end(), 0); // ascending integer values
+
+            size_t size = bloscCompressedSize(reinterpret_cast<const char*>(&values[0]), values.size());
+
+            // uncompressed size
+            CPPUNIT_ASSERT_EQUAL(values.size(), size_t(PageSize));
+            // compressed size
+            CPPUNIT_ASSERT_EQUAL(std::streampos(size), std::streampos(4444));
+        }
+        { // bloscCompress test
+            std::vector<uint8_t> values;
+            values.resize(PageSize);
+            std::iota(values.begin(), values.end(), 0); // ascending integer values
+
+            size_t bufferBytes(1024*1024+BLOSC_MAX_OVERHEAD);
+            size_t compressedBytes(0);
+            std::unique_ptr<char[]> tempBuffer(new char[bufferBytes]);
+
+            bloscCompress(tempBuffer.get(), compressedBytes, bufferBytes,
+                reinterpret_cast<const char*>(&values[0]), values.size());
+
+            // uncompressed size
+            CPPUNIT_ASSERT_EQUAL(values.size(), size_t(PageSize));
+            // compressed size
+            CPPUNIT_ASSERT_EQUAL(std::streampos(compressedBytes), std::streampos(4444));
+        }
+    }
+#endif
 }
 
 
