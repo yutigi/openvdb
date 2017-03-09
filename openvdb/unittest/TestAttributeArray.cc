@@ -413,6 +413,30 @@ TestAttributeArray::testAttributeArray()
         typedAttr.getUnsafe(0, value2);
 
         CPPUNIT_ASSERT_DOUBLES_EQUAL(double(0.2), value2, /*tolerance=*/double(0.0001));
+
+        // test set(index, sourceArray, sourceIndex) overload of set method
+        AttributeArray::Ptr attr2(new AttributeArrayD(50));
+        AttributeArrayD& typedAttr2 = static_cast<AttributeArrayD&>(*attr2);
+        AttributeArray::Ptr attr3(new  AttributeArrayD(5));
+        AttributeArrayD& typedAttr3 = static_cast<AttributeArrayD&>(*attr3);
+
+        typedAttr3.set(0, 0.2);
+        typedAttr2.set(0, *attr3, 0);
+
+        double value3 = 0.0;
+
+        // this should match index 0 of typedAttr
+        typedAttr2.get(0, value3);
+
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(double(0.2), value3, /*tolerance=*/double(0.0001));
+
+        // test with differing indices on both attributes.
+        typedAttr3.set(2, 5.0);
+        typedAttr2.set(3, *attr3, 2);
+        double value4 = 0.0;
+
+        typedAttr2.get(3, value4);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(double(5.0), value4, /*tolerance=*/double(0.0001));
     }
 
     using AttributeArrayI = TypedAttributeArray<int32_t>;
