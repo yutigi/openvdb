@@ -943,9 +943,10 @@ AttributeSet::Descriptor::validName(const Name& name)
 void
 AttributeSet::Descriptor::parseNames(   std::vector<std::string>& includeNames,
                                         std::vector<std::string>& excludeNames,
+                                        bool& includeAll,
                                         const std::string& nameStr)
 {
-    bool includeAll = false;
+    includeAll = false;
 
     std::stringstream tokenStream(nameStr);
 
@@ -970,6 +971,15 @@ AttributeSet::Descriptor::parseNames(   std::vector<std::string>& includeNames,
             includeNames.push_back(token);
         }
     }
+}
+
+void
+AttributeSet::Descriptor::parseNames(   std::vector<std::string>& includeNames,
+                                        std::vector<std::string>& excludeNames,
+                                        const std::string& nameStr)
+{
+    bool includeAll = false;
+    Descriptor::parseNames(includeNames, excludeNames, includeAll, nameStr);
 }
 
 void

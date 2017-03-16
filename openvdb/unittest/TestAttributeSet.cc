@@ -378,7 +378,9 @@ TestAttributeSet::testAttributeSetDescriptor()
     { // Test single token parse
         std::vector<std::string> includeNames;
         std::vector<std::string> excludeNames;
-        Descriptor::parseNames(includeNames, excludeNames, "group1");
+        bool includeAll = false;
+        Descriptor::parseNames(includeNames, excludeNames, includeAll, "group1");
+        CPPUNIT_ASSERT(!includeAll);
         CPPUNIT_ASSERT(testStringVector(includeNames, "group1"));
         CPPUNIT_ASSERT(testStringVector(excludeNames));
     }
@@ -441,7 +443,9 @@ TestAttributeSet::testAttributeSetDescriptor()
     { // Test parse (*) character
         std::vector<std::string> includeNames;
         std::vector<std::string> excludeNames;
-        Descriptor::parseNames(includeNames, excludeNames, "*");
+        bool includeAll = false;
+        Descriptor::parseNames(includeNames, excludeNames, includeAll, "*");
+        CPPUNIT_ASSERT(includeAll);
         CPPUNIT_ASSERT(testStringVector(includeNames));
         CPPUNIT_ASSERT(testStringVector(excludeNames));
     }

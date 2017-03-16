@@ -394,6 +394,13 @@ public:
     static bool validName(const Name& name);
 
     /// Extract each name from nameStr into includeNames, or into excludeNames if name prefixed with caret
+    /// @param includeAll denotes whether a "*" wildcard is present in the includeNames
+    static void parseNames( std::vector<std::string>& includeNames,
+                            std::vector<std::string>& excludeNames,
+                            bool& includeAll,
+                            const std::string& nameStr);
+
+    /// Extract each name from nameStr into includeNames, or into excludeNames if name prefixed with caret
     static void parseNames( std::vector<std::string>& includeNames,
                             std::vector<std::string>& excludeNames,
                             const std::string& nameStr);
