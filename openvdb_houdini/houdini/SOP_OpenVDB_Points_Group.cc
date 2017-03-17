@@ -143,7 +143,8 @@ newSopOperator(OP_OperatorTable* table)
         .setChoiceList(&hutil::PrimGroupMenuInput1));
 
     parms.add(hutil::ParmFactory(PRM_STRING, "vdbpointsgroup", "VDB Points Group")
-        .setHelpText("Specify VDB Points Groups to use as an input."));
+        .setHelpText("Specify VDB Points Groups to use as an input.")
+        .setChoiceList(&hvdb::VDBPointsGroupMenuInput1));
 
     parms.beginSwitcher("tabMenu1");
     parms.addFolder("Create");

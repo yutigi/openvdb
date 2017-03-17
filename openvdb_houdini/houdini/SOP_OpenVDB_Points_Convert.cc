@@ -846,7 +846,8 @@ newSopOperator(OP_OperatorTable* table)
         .setChoiceList(&hutil::PrimGroupMenu));
 
     parms.add(hutil::ParmFactory(PRM_STRING, "vdbpointsgroup", "VDB Points Group")
-        .setHelpText("Specify VDB Points Groups to use as an input."));
+        .setHelpText("Specify VDB Points Groups to use as an input.")
+        .setChoiceList(&hvdb::VDBPointsGroupMenuInput1));
 
     //  point grid name
     parms.add(hutil::ParmFactory(PRM_STRING, "name", "VDB Name")

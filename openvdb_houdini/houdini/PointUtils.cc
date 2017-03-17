@@ -32,6 +32,7 @@
 /// @authors Dan Bailey, Nick Avramoussis, Richard Kwok
 
 #include "PointUtils.h"
+#include "Utils.h"
 #include <openvdb/openvdb.h>
 #include <openvdb/util/Formats.h>
 #include <openvdb/points/AttributeArrayString.h>
@@ -41,9 +42,12 @@
 #include <sstream>
 #include <string>
 
+#include <CH/CH_Manager.h>
+
+namespace openvdb_houdini {
 
 void
-openvdb_houdini::convertPointDataGridToHoudini(
+convertPointDataGridToHoudini(
     GU_Detail& detail,
     const openvdb::points::PointDataGrid& grid,
     const std::vector<std::string>& attributes,
@@ -51,8 +55,6 @@ openvdb_houdini::convertPointDataGridToHoudini(
     const std::vector<std::string>& excludeGroups,
     const bool inCoreOnly)
 {
-    using openvdb_houdini::HoudiniWriteAttribute;
-
     const openvdb::points::PointDataTree& tree = grid.tree();
 
     auto leafIter = tree.cbeginLeaf();
@@ -236,7 +238,7 @@ openvdb_houdini::convertPointDataGridToHoudini(
 
 
 void
-openvdb_houdini::pointDataGridSpecificInfoText(std::ostream& infoStr, const openvdb::GridBase& grid)
+pointDataGridSpecificInfoText(std::ostream& infoStr, const openvdb::GridBase& grid)
 {
     typedef openvdb::points::PointDataGrid PointDataGrid;
     typedef openvdb::points::PointDataTree PointDataTree;
@@ -260,7 +262,7 @@ openvdb_houdini::pointDataGridSpecificInfoText(std::ostream& infoStr, const open
 
     std::string viewportGroupName = "";
     if (openvdb::StringMetadata::ConstPtr stringMeta =
-        grid.getMetadata<openvdb::StringMetadata>(openvdb_houdini::META_GROUP_VIEWPORT))
+        grid.getMetadata<openvdb::StringMetadata>(META_GROUP_VIEWPORT))
     {
         viewportGroupName = stringMeta->value();
     }
@@ -390,6 +392,94 @@ openvdb_houdini::pointDataGridSpecificInfoText(std::ostream& infoStr, const open
         if (first)  infoStr << "<none>";
     }
 }
+
+namespace {
+
+inline int
+lookupGroupInput(const PRM_SpareData *spare)
+{
+    const char  *istring;
+    if (!spare) return 0;
+    istring = spare->getValue("sop_input");
+    return istring ? atoi(istring) : 0;
+}
+
+void
+sopBuildVDBPointsGroupMenu(void *data, PRM_Name *menuEntries, int themenusize,
+    const PRM_SpareData *spare, const PRM_Parm *parm)
+{
+    using openvdb::points::PointDataGrid;
+
+    SOP_Node* sop = CAST_SOPNODE((OP_Node *)data);
+    int inputIndex = lookupGroupInput(spare);
+
+    const GU_Detail* gdp = sop->getInputLastGeo(inputIndex, CHgetEvalTime());
+
+    // const cast as iterator requires non-const access, however data is not modified
+    VdbPrimIterator vdbIt(const_cast<GU_Detail*>(gdp));
+
+    int n_entries = 0;
+
+    for (; vdbIt; ++vdbIt) {
+        GU_PrimVDB* vdbPrim = *vdbIt;
+
+        PointDataGrid::ConstPtr grid =
+                openvdb::gridConstPtrCast<PointDataGrid>(vdbPrim->getConstGridPtr());
+
+        // ignore all but point data grids
+        if (!grid)      continue;
+        auto leafIter = grid->tree().cbeginLeaf();
+        if (!leafIter)  continue;
+
+        const openvdb::points::AttributeSet::Descriptor& descriptor =
+            leafIter->attributeSet().descriptor();
+
+        for (const auto& it : descriptor.groupMap()) {
+            // add each VDB Points group to the menu
+            menuEntries[n_entries].setToken(it.first.c_str());
+            menuEntries[n_entries].setLabel(it.first.c_str());
+            n_entries++;
+        }
+    }
+
+    // zero value ends the menu
+
+    menuEntries[n_entries].setToken(0);
+    menuEntries[n_entries].setLabel(0);
+}
+
+} // unnamed namespace
+
+
+#ifdef _MSC_VER
+
+OPENVDB_HOUDINI_API const PRM_ChoiceList
+VDBPointsGroupMenuInput1(PRM_CHOICELIST_TOGGLE, sopBuildVDBPointsGroupMenu);
+OPENVDB_HOUDINI_API const PRM_ChoiceList
+VDBPointsGroupMenuInput2(PRM_CHOICELIST_TOGGLE, sopBuildVDBPointsGroupMenu);
+OPENVDB_HOUDINI_API const PRM_ChoiceList
+VDBPointsGroupMenuInput3(PRM_CHOICELIST_TOGGLE, sopBuildVDBPointsGroupMenu);
+OPENVDB_HOUDINI_API const PRM_ChoiceList
+VDBPointsGroupMenuInput4(PRM_CHOICELIST_TOGGLE, sopBuildVDBPointsGroupMenu);
+
+OPENVDB_HOUDINI_API const PRM_ChoiceList VDBPointsGroupMenu(PRM_CHOICELIST_TOGGLE, sopBuildVDBPointsGroupMenu);
+
+#else
+
+const PRM_ChoiceList
+VDBPointsGroupMenuInput1(PRM_CHOICELIST_TOGGLE, sopBuildVDBPointsGroupMenu);
+const PRM_ChoiceList
+VDBPointsGroupMenuInput2(PRM_CHOICELIST_TOGGLE, sopBuildVDBPointsGroupMenu);
+const PRM_ChoiceList
+VDBPointsGroupMenuInput3(PRM_CHOICELIST_TOGGLE, sopBuildVDBPointsGroupMenu);
+const PRM_ChoiceList
+VDBPointsGroupMenuInput4(PRM_CHOICELIST_TOGGLE, sopBuildVDBPointsGroupMenu);
+
+const PRM_ChoiceList VDBPointsGroupMenu(PRM_CHOICELIST_TOGGLE, sopBuildVDBPointsGroupMenu);
+
+#endif
+
+} // namespace openvdb_houdini
 
 // Copyright (c) 2012-2017 DreamWorks Animation LLC
 // All rights reserved. This software is distributed under the

@@ -51,6 +51,10 @@
 #include <GA/GA_ElementGroup.h>
 #include <GA/GA_Iterator.h>
 
+#include <OP/OP_Operator.h>
+#include <PRM/PRM_Include.h>
+#include <PRM/PRM_SpareData.h>
+#include <SOP/SOP_Node.h>
 
 namespace openvdb_houdini {
 
@@ -594,6 +598,22 @@ void convertPointDataGridToHoudini(
 
 /// @brief If the given grid is a PointDataGrid, add node specific info text to the stream provided
 void pointDataGridSpecificInfoText(std::ostream&, const openvdb::GridBase&);
+
+
+///////////////////////////////////////
+
+
+// VDB Points group name drop-down menu
+
+OPENVDB_HOUDINI_API extern const PRM_ChoiceList VDBPointsGroupMenuInput1;
+OPENVDB_HOUDINI_API extern const PRM_ChoiceList VDBPointsGroupMenuInput2;
+OPENVDB_HOUDINI_API extern const PRM_ChoiceList VDBPointsGroupMenuInput3;
+OPENVDB_HOUDINI_API extern const PRM_ChoiceList VDBPointsGroupMenuInput4;
+
+/// @note   Use this if you have more than 4 inputs, otherwise use
+///         the input specific menus instead which automatically
+///         handle the appropriate spare data settings.
+OPENVDB_HOUDINI_API extern const PRM_ChoiceList VDBPointsGroupMenu;
 
 } // namespace openvdb_houdini
 
